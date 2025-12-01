@@ -1,0 +1,29 @@
+[package]
+name = "telegram-password-bot"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Telegram bot framework
+teloxide = { version = "0.12", features = ["macros"] }
+
+# Async runtime
+tokio = { version = "1.35", features = ["full"] }
+
+# Cryptographically secure randomness
+rand = "0.8"
+rand_core = "0.6"
+
+# Logging and tracing
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Error handling
+thiserror = "1.0"
+
+# Environment variable loading
+dotenvy = "0.15"
+
+[dev-dependencies]
+# For testing
+tokio-test = "0.4"
