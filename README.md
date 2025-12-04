@@ -20,22 +20,60 @@ A production-quality Telegram bot written in Rust that generates cryptographical
 - **Intended Use**: This bot is a convenience tool. For maximum security, consider using an offline password generator or a dedicated password manager.
 - **Rate Limiting**: The bot implements per-chat rate limiting to prevent abuse and excessive requests.
 
-## Prerequisites
+## Deployment Options
 
+### Option 1: Deploy to Railway (Recommended for 24/7 Hosting)
+
+**Railway** provides easy cloud deployment with a generous free tier perfect for Telegram bots.
+
+#### Quick Deploy Steps:
+
+1. **Sign up for Railway**
+   - Go to [railway.app](https://railway.app)
+   - Click "Login" and sign in with your GitHub account
+   - Authorize Railway to access your repositories
+
+2. **Deploy from GitHub**
+   - Click "New Project" → "Deploy from GitHub repo"
+   - Select your `rust_project` repository
+   - Railway will automatically detect Rust and start building
+
+3. **Add Environment Variable**
+   - Once deployed, click on your service
+   - Go to "Variables" tab
+   - Click "+ New Variable"
+   - Add: `TELEGRAM_BOT_TOKEN` with your bot token value
+   - Railway will automatically rebuild and redeploy
+
+4. **Your bot is now live 24/7!** 🎉
+
+**Files included for Railway:**
+- `railway.toml` - Railway configuration
+- `Procfile` - Tells Railway how to start the bot
+- `nixpacks.toml` - Build configuration
+
+**Cost:** Railway offers $5 in free credits per month, which is more than enough for this bot.
+
+---
+
+### Option 2: Run Locally (Development/Testing)
+
+**Prerequisites:**
 - **Rust**: Install from [rustup.rs](https://rustup.rs/) (stable channel)
 - **Telegram Bot Token**: Obtain from [@BotFather](https://t.me/BotFather) on Telegram
 
-## Installation & Setup
+#### Local Setup Steps:
 
-### 1. Clone or Download the Project
+**1. Clone the Project**
 
 ```bash
+git clone https://github.com/yourusername/rust_project.git
 cd rust_project
 ```
 
-### 2. Configure Environment Variables
+**2. Configure Environment Variables**
 
-Create a `.env` file in the project root (use `.env.example` as a template):
+Create a `.env` file in the project root (copy from `.env.example`):
 
 ```bash
 # Required: Your Telegram bot token from @BotFather
@@ -54,23 +92,28 @@ RATE_LIMIT_PER_MINUTE=10
 3. Copy the token provided by BotFather
 4. Paste it into your `.env` file
 
-### 3. Build the Project
+**3. Build the Project**
 
 ```bash
 cargo build --release
 ```
 
-### 4. Run the Bot
+**4. Run the Bot**
 
 ```bash
 cargo run --release
 ```
 
-Alternatively, after building, you can run the binary directly:
-
-```bash
-./target/release/telegram-password-bot
+You should see output like:
 ```
+INFO telegram_password_bot: Starting Telegram Password Generator Bot...
+INFO telegram_password_bot: Configuration loaded successfully
+INFO telegram_password_bot: Bot initialized, starting dispatcher...
+```
+
+**To stop the bot:** Press `Ctrl+C`
+
+**Note:** When running locally, the bot only works while your terminal is open. For 24/7 operation, use Railway deployment above.
 
 ## Usage
 
