@@ -1,2 +1,2 @@
-[build]
-pkgs = ["pkg-config", "openssl"]
+[phases.setup]
+nixpkgs = ["pkg-config", "openssl", "openssl.dev"]
