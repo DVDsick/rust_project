@@ -1,6 +1,8 @@
 # Telegram Password Generator Bot 🔐
 
-A production-quality Telegram bot written in Rust that generates cryptographically secure random passwords on demand. This project is designed as a defensive cybersecurity tool suitable for university-level Rust and cybersecurity coursework.
+**Author:** Davide SICLARI - Group CDOF5 (OCC1)
+
+A Telegram bot written in Rust that generates cryptographically secure random passwords on demand. This project is designed as a defensive cybersecurity tool suitable for university-level Rust and cybersecurity coursework.
 
 ## Features
 
@@ -19,6 +21,28 @@ A production-quality Telegram bot written in Rust that generates cryptographical
 - **Telegram Limitations**: Telegram messages are **not end-to-end encrypted**. Passwords sent via this bot travel through Telegram's servers and may be visible to Telegram and the devices involved.
 - **Intended Use**: This bot is a convenience tool. For maximum security, consider using an offline password generator or a dedicated password manager.
 - **Rate Limiting**: The bot implements per-chat rate limiting to prevent abuse and excessive requests.
+
+## ⚠️ Responsible Use Warning
+
+**This tool is designed as a DEFENSIVE cybersecurity tool for legitimate purposes only.**
+
+### ✅ Legitimate Uses:
+- Generating strong passwords for personal accounts
+- Educational purposes in cybersecurity courses
+- Security research and testing (with proper authorization)
+- Password recovery and management assistance
+
+### ❌ Prohibited Uses:
+- **DO NOT use this bot for offensive purposes** (hacking, unauthorized access, credential stuffing, etc.)
+- **DO NOT use to generate passwords for unauthorized account access**
+- **DO NOT use to bypass security measures or authentication systems**
+- **DO NOT use in any illegal activity or violation of computer fraud laws**
+- **DO NOT distribute or weaponize this tool for malicious purposes**
+
+### Legal Notice:
+Users are solely responsible for their use of this tool. Unauthorized access to computer systems is illegal under the Computer Fraud and Abuse Act (CFAA) in the USA and equivalent laws worldwide. The developers of this bot are not liable for any misuse or illegal activities conducted with this tool.
+
+**Use this tool responsibly and ethically. All users agree to use this tool only for lawful and authorized purposes.**
 
 ## Deployment Options
 
