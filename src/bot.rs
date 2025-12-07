@@ -81,7 +81,7 @@ pub async fn handle_start(bot: Bot, msg: Message) -> ResponseResult<()> {
         Type `/help` for detailed usage information.";
 
     bot.send_message(msg.chat.id, welcome_text)
-        .parse_mode(ParseMode::Markdown)
+        .parse_mode(ParseMode::MarkdownV2)
         .await?;
 
     info!(
@@ -133,7 +133,6 @@ pub async fn handle_help(bot: Bot, msg: Message, state: BotState) -> ResponseRes
     );
 
     bot.send_message(msg.chat.id, help_text)
-        .parse_mode(ParseMode::Markdown)
         .await?;
 
     Ok(())
@@ -209,7 +208,7 @@ pub async fn handle_password(
     }
 
     // Parse arguments
-    let mut password_config = match parse_password_args(&args, state.config.default_password_length)
+    let password_config = match parse_password_args(&args, state.config.default_password_length)
     {
         Ok(config) => config,
         Err(e) => {
@@ -220,7 +219,6 @@ pub async fn handle_password(
                 e
             );
             bot.send_message(msg.chat.id, error_msg)
-                .parse_mode(ParseMode::Markdown)
                 .await?;
             return Ok(());
         }
@@ -279,14 +277,11 @@ pub async fn handle_password(
     };
 
     let response = format!(
-        "🔐 *Your Secure Password:*\n\n`{}`\n\n{} {}\n\n\
-         ⚠️ *Security reminder:* Copy this password immediately and store it securely. \
-         This message will remain in your chat history.",
+        "🔐 Your Secure Password:\n\n`{}`\n\n{} {}\n\n⚠️ Security reminder: Copy this password immediately and store it securely. This message will remain in your chat history.",
         password, strength_emoji, metadata
     );
 
     bot.send_message(msg.chat.id, response)
-        .parse_mode(ParseMode::Markdown)
         .await?;
 
     // Log metadata only (never log the actual password)
@@ -300,9 +295,8 @@ pub async fn handle_password(
 
 /// Handler for unknown commands.
 pub async fn handle_unknown(bot: Bot, msg: Message) -> ResponseResult<()> {
-    let response = "❓ Unknown command. Type `/help` to see available commands.";
+    let response = "❓ Unknown command. Type /help to see available commands.";
     bot.send_message(msg.chat.id, response)
-        .parse_mode(ParseMode::Markdown)
         .await?;
     Ok(())
 }

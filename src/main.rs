@@ -57,6 +57,30 @@ async fn handle_command(
     }
 }
 
+/// Set up the command menu that appears in Telegram.
+async fn set_bot_commands(bot: &Bot) -> Result<()> {
+    use teloxide::types::BotCommand;
+
+    let commands = vec![
+        BotCommand {
+            command: "start".to_string(),
+            description: "Start the bot and see welcome message".to_string(),
+        },
+        BotCommand {
+            command: "help".to_string(),
+            description: "Show help and usage information".to_string(),
+        },
+        BotCommand {
+            command: "pass".to_string(),
+            description: "Generate a secure password".to_string(),
+        },
+    ];
+
+    bot.set_my_commands(commands).await?;
+    info!("Bot commands menu set successfully");
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     // Initialize tracing/logging
@@ -99,6 +123,9 @@ async fn main() -> Result<()> {
     let bot = Bot::new(&config.bot_token);
 
     info!("Bot initialized, starting dispatcher...");
+
+    // Set up command menu in Telegram
+    set_bot_commands(&bot).await?;
 
     // Create shared state
     let state = BotState::new(config);
