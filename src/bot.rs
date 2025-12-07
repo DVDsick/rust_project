@@ -9,7 +9,6 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use teloxide::prelude::*;
-use teloxide::types::ParseMode;
 use tokio::sync::Mutex;
 use tracing::{info, warn};
 
@@ -65,23 +64,34 @@ impl BotState {
 
 /// Handler for the /start command.
 pub async fn handle_start(bot: Bot, msg: Message) -> ResponseResult<()> {
-    let welcome_text = "🔐 *Secure Password Generator Bot*\n\n\
+    let welcome_text = "🔐 Secure Password Generator Bot\n\n\
         Welcome! I generate strong, random passwords using cryptographically secure randomness.\n\n\
-        🔒 *Privacy Notice:*\n\
+        🔒 Privacy Notice:\n\
         • Passwords are generated using OS-level secure randomness\n\
         • Passwords are NOT logged or stored on the server\n\
         • However, Telegram messages are not end-to-end encrypted\n\
         • Use this bot as a convenience tool, but be aware of inherent risks\n\n\
-        📝 *Quick Start:*\n\
-        Use `/pass` to generate a password with default settings, or customize it:\n\
-        • `/pass` - Default 16-character password\n\
-        • `/pass 24` - 24-character password\n\
-        • `/pass 20 --symbols` - Include symbols\n\
-        • `/pass 16 --no-ambiguous` - Exclude ambiguous characters\n\n\
-        Type `/help` for detailed usage information.";
+        📝 Quick Start:\n\
+        Use /pass to generate a password with default settings, or customize it:\n\
+        • /pass - Default 16-character password\n\
+        • /pass 24 - 24-character password\n\
+        • /pass 20 --symbols - Include symbols\n\
+        • /pass 16 --no-ambiguous - Exclude ambiguous characters\n\n\
+        Type /help for detailed usage information.";
+
+    use teloxide::types::InlineKeyboardButton;
+    let keyboard = teloxide::types::InlineKeyboardMarkup::new(vec![
+        vec![
+            InlineKeyboardButton::switch_inline_query_current_chat("📋 Default (16)", "/pass"),
+            InlineKeyboardButton::switch_inline_query_current_chat("🔒 Strong (24)", "/pass 24"),
+        ],
+        vec![
+            InlineKeyboardButton::switch_inline_query_current_chat("📖 Help", "/help"),
+        ],
+    ]);
 
     bot.send_message(msg.chat.id, welcome_text)
-        .parse_mode(ParseMode::MarkdownV2)
+        .reply_markup(keyboard)
         .await?;
 
     info!(
@@ -95,32 +105,32 @@ pub async fn handle_start(bot: Bot, msg: Message) -> ResponseResult<()> {
 /// Handler for the /help command.
 pub async fn handle_help(bot: Bot, msg: Message, state: BotState) -> ResponseResult<()> {
     let help_text = format!(
-        "🔐 *Password Generator - Help*\n\n\
-        *Available Commands:*\n\
-        • `/start` - Welcome message\n\
-        • `/help` - Show this help message\n\
-        • `/pass` or `/password` - Generate a secure password\n\n\
-        *Password Generation Syntax:*\n\
-        `/pass [length] [options]`\n\n\
-        *Examples:*\n\
-        • `/pass` - Default password (length: {})\n\
-        • `/pass 24` - 24-character password\n\
-        • `/pass 20 --symbols` - Include symbols\n\
-        • `/pass 16 --no-symbols` - No symbols\n\
-        • `/pass 18 --no-ambiguous` - Exclude ambiguous chars (0,O,o,1,l,I)\n\
-        • `/pass 20 --no-digits --symbols` - No digits, with symbols\n\n\
-        *Available Options:*\n\
-        • `--symbols` / `--no-symbols`\n\
-        • `--digits` / `--no-digits`\n\
-        • `--uppercase` / `--no-uppercase`\n\
-        • `--lowercase` / `--no-lowercase`\n\
-        • `--no-ambiguous` - Exclude confusing characters\n\n\
-        *Constraints:*\n\
+        "🔐 Password Generator - Help\n\n\
+        Available Commands:\n\
+        • /start - Welcome message\n\
+        • /help - Show this help message\n\
+        • /pass or /password - Generate a secure password\n\n\
+        Password Generation Syntax:\n\
+        /pass [length] [options]\n\n\
+        Examples:\n\
+        • /pass - Default password (length: {})\n\
+        • /pass 24 - 24-character password\n\
+        • /pass 20 --symbols - Include symbols\n\
+        • /pass 16 --no-symbols - No symbols\n\
+        • /pass 18 --no-ambiguous - Exclude ambiguous chars (0,O,o,1,l,I)\n\
+        • /pass 20 --no-digits --symbols - No digits, with symbols\n\n\
+        Available Options:\n\
+        • --symbols / --no-symbols\n\
+        • --digits / --no-digits\n\
+        • --uppercase / --no-uppercase\n\
+        • --lowercase / --no-lowercase\n\
+        • --no-ambiguous - Exclude confusing characters\n\n\
+        Constraints:\n\
         • Min length: {} characters\n\
         • Max length: {} characters\n\
         • At least one character type must be enabled\n\
         • Rate limit: {} passwords per minute per chat\n\n\
-        *Security Recommendations:*\n\
+        Security Recommendations:\n\
         ✅ Use long passwords (16+ characters)\n\
         ✅ Use unique passwords for each account\n\
         ✅ Store passwords in a secure password manager\n\
@@ -132,7 +142,20 @@ pub async fn handle_help(bot: Bot, msg: Message, state: BotState) -> ResponseRes
         state.config.rate_limit_per_minute
     );
 
+    use teloxide::types::InlineKeyboardButton;
+    let keyboard = teloxide::types::InlineKeyboardMarkup::new(vec![
+        vec![
+            InlineKeyboardButton::switch_inline_query_current_chat("📋 Default", "/pass"),
+            InlineKeyboardButton::switch_inline_query_current_chat("🔒 Strong (24)", "/pass 24"),
+        ],
+        vec![
+            InlineKeyboardButton::switch_inline_query_current_chat("🔤 No Symbols", "/pass 16 --no-symbols"),
+            InlineKeyboardButton::switch_inline_query_current_chat("🚫 Ambiguous", "/pass 18 --no-ambiguous"),
+        ],
+    ]);
+
     bot.send_message(msg.chat.id, help_text)
+        .reply_markup(keyboard)
         .await?;
 
     Ok(())
