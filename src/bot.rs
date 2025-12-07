@@ -414,7 +414,7 @@ pub async fn handle_callback(
         let chat_id = q.from.id;
         {
             let mut rate_limiter = state.rate_limiter.lock().await;
-            if let Err(e) = rate_limiter.check_rate_limit(chat_id.0, state.config.rate_limit_per_minute) {
+            if let Err(e) = rate_limiter.check_rate_limit(chat_id.0 as i64, state.config.rate_limit_per_minute) {
                 bot.answer_callback_query(&q.id)
                     .text(e.to_string())
                     .await?;
@@ -545,4 +545,12 @@ mod tests {
         // Should deny the next request
         assert!(limiter.check_rate_limit(chat_id, 5).is_err());
     }
+}
+
+/// Handler for unknown commands.
+pub async fn handle_unknown(bot: Bot, msg: Message) -> ResponseResult<()> {
+    let response = "❓ Unknown command. Type /help to see available commands.";
+    bot.send_message(msg.chat.id, response)
+        .await?;
+    Ok(())
 }

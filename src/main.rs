@@ -17,7 +17,7 @@ mod password;
 use bot::{handle_callback, handle_help, handle_password, handle_start, handle_unknown, BotState};
 use config::Config;
 use error::Result;
-use teloxide::dispatching::{dialogue, UpdateFilterExt};
+use teloxide::dispatching::UpdateFilterExt;
 use teloxide::prelude::*;
 use teloxide::types::Update;
 use teloxide::utils::command::BotCommands;
@@ -131,14 +131,19 @@ async fn main() -> Result<()> {
     let state = BotState::new(config);
 
     // Set up command handler
-    let handler = Update::filter_message()
+    let message_handler = Update::filter_message()
         .branch(
             dptree::entry()
                 .filter_command::<Command>()
                 .endpoint(handle_command),
         )
-        .branch(dptree::endpoint(handle_unknown))
-        .or(Update::filter_callback_query().endpoint(handle_callback));
+        .branch(dptree::endpoint(handle_unknown));
+
+    let callback_handler = Update::filter_callback_query().endpoint(handle_callback);
+
+    let handler = dptree::entry()
+        .branch(message_handler)
+        .branch(callback_handler);
 
     // Start the dispatcher
     Dispatcher::builder(bot, handler)
