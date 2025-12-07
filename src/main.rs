@@ -14,7 +14,7 @@ mod config;
 mod error;
 mod password;
 
-use bot::{handle_help, handle_password, handle_start, handle_unknown, BotState};
+use bot::{handle_callback, handle_help, handle_password, handle_start, handle_unknown, BotState};
 use config::Config;
 use error::Result;
 use teloxide::dispatching::{dialogue, UpdateFilterExt};
@@ -137,7 +137,8 @@ async fn main() -> Result<()> {
                 .filter_command::<Command>()
                 .endpoint(handle_command),
         )
-        .branch(dptree::endpoint(handle_unknown));
+        .branch(dptree::endpoint(handle_unknown))
+        .or(Update::filter_callback_query().endpoint(handle_callback));
 
     // Start the dispatcher
     Dispatcher::builder(bot, handler)

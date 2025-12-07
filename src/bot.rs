@@ -9,6 +9,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use teloxide::prelude::*;
+use teloxide::types::CallbackQuery;
 use tokio::sync::Mutex;
 use tracing::{info, warn};
 
@@ -82,11 +83,11 @@ pub async fn handle_start(bot: Bot, msg: Message) -> ResponseResult<()> {
     use teloxide::types::InlineKeyboardButton;
     let keyboard = teloxide::types::InlineKeyboardMarkup::new(vec![
         vec![
-            InlineKeyboardButton::switch_inline_query_current_chat("📋 Default (16)", "/pass"),
-            InlineKeyboardButton::switch_inline_query_current_chat("🔒 Strong (24)", "/pass 24"),
+            InlineKeyboardButton::callback("📋 Default (16)", "pass_default"),
+            InlineKeyboardButton::callback("🔒 Strong (24)", "pass_24"),
         ],
         vec![
-            InlineKeyboardButton::switch_inline_query_current_chat("📖 Help", "/help"),
+            InlineKeyboardButton::callback("📖 Help", "show_help"),
         ],
     ]);
 
@@ -145,12 +146,16 @@ pub async fn handle_help(bot: Bot, msg: Message, state: BotState) -> ResponseRes
     use teloxide::types::InlineKeyboardButton;
     let keyboard = teloxide::types::InlineKeyboardMarkup::new(vec![
         vec![
-            InlineKeyboardButton::switch_inline_query_current_chat("📋 Default", "/pass"),
-            InlineKeyboardButton::switch_inline_query_current_chat("🔒 Strong (24)", "/pass 24"),
+            InlineKeyboardButton::callback("📋 Default", "pass_default"),
+            InlineKeyboardButton::callback("🔒 Strong (24)", "pass_24"),
         ],
         vec![
-            InlineKeyboardButton::switch_inline_query_current_chat("🔤 No Symbols", "/pass 16 --no-symbols"),
-            InlineKeyboardButton::switch_inline_query_current_chat("🚫 Ambiguous", "/pass 18 --no-ambiguous"),
+            InlineKeyboardButton::callback("🔤 No Symbols", "pass_no_symbols"),
+            InlineKeyboardButton::callback("🚫 Ambiguous", "pass_no_ambiguous"),
+        ],
+        vec![
+            InlineKeyboardButton::callback("🔐 Very Strong (32)", "pass_32"),
+            InlineKeyboardButton::callback("📏 Custom Length", "pass_custom"),
         ],
     ]);
 
@@ -164,7 +169,7 @@ pub async fn handle_help(bot: Bot, msg: Message, state: BotState) -> ResponseRes
 /// Parse password generation command arguments.
 ///
 /// Expected format: /pass [length] [--option1] [--option2] ...
-fn parse_password_args(args: &str, default_length: usize) -> Result<PasswordConfig> {
+pub fn parse_password_args(args: &str, default_length: usize) -> Result<PasswordConfig> {
     let mut config = PasswordConfig::default();
     config.length = default_length;
 
@@ -316,11 +321,174 @@ pub async fn handle_password(
     Ok(())
 }
 
-/// Handler for unknown commands.
-pub async fn handle_unknown(bot: Bot, msg: Message) -> ResponseResult<()> {
-    let response = "❓ Unknown command. Type /help to see available commands.";
-    bot.send_message(msg.chat.id, response)
-        .await?;
+/// Handler for inline button callbacks.
+pub async fn handle_callback(
+    bot: Bot,
+    q: CallbackQuery,
+    state: BotState,
+) -> ResponseResult<()> {
+    use teloxide::types::InlineKeyboardButton;
+    
+    if let Some(ref data) = q.data {
+        // Handle different button callbacks
+        let message = match data.as_str() {
+            "pass_default" => "/pass".to_string(),
+            "pass_24" => "/pass 24".to_string(),
+            "pass_32" => "/pass 32".to_string(),
+            "pass_no_symbols" => "/pass 16 --no-symbols".to_string(),
+            "pass_no_ambiguous" => "/pass 18 --no-ambiguous".to_string(),
+            "pass_custom" => {
+                bot.answer_callback_query(&q.id).await?;
+                bot.send_message(
+                    q.from.id,
+                    "📝 Please type your custom password command:\nExample: /pass 20 --symbols --no-digits",
+                )
+                .await?;
+                return Ok(());
+            }
+            "show_help" => {
+                // Re-send help with buttons
+                let help_text = format!(
+                    "🔐 Password Generator - Help\n\n\
+                    Available Commands:\n\
+                    • /start - Welcome message\n\
+                    • /help - Show this help message\n\
+                    • /pass or /password - Generate a secure password\n\n\
+                    Password Generation Syntax:\n\
+                    /pass [length] [options]\n\n\
+                    Examples:\n\
+                    • /pass - Default password (length: {})\n\
+                    • /pass 24 - 24-character password\n\
+                    • /pass 20 --symbols - Include symbols\n\
+                    • /pass 16 --no-symbols - No symbols\n\
+                    • /pass 18 --no-ambiguous - Exclude ambiguous chars (0,O,o,1,l,I)\n\
+                    • /pass 20 --no-digits --symbols - No digits, with symbols\n\n\
+                    Available Options:\n\
+                    • --symbols / --no-symbols\n\
+                    • --digits / --no-digits\n\
+                    • --uppercase / --no-uppercase\n\
+                    • --lowercase / --no-lowercase\n\
+                    • --no-ambiguous - Exclude confusing characters\n\n\
+                    Constraints:\n\
+                    • Min length: {} characters\n\
+                    • Max length: {} characters\n\
+                    • At least one character type must be enabled\n\
+                    • Rate limit: {} passwords per minute per chat\n\n\
+                    Security Recommendations:\n\
+                    ✅ Use long passwords (16+ characters)\n\
+                    ✅ Use unique passwords for each account\n\
+                    ✅ Store passwords in a secure password manager\n\
+                    ⚠️ Remember: Telegram is not end-to-end encrypted\n\
+                    ⚠️ This bot doesn't log passwords, but they travel through Telegram's servers",
+                    state.config.default_password_length,
+                    state.config.min_password_length,
+                    state.config.max_password_length,
+                    state.config.rate_limit_per_minute
+                );
+
+                let keyboard = teloxide::types::InlineKeyboardMarkup::new(vec![
+                    vec![
+                        InlineKeyboardButton::callback("📋 Default", "pass_default"),
+                        InlineKeyboardButton::callback("🔒 Strong (24)", "pass_24"),
+                    ],
+                    vec![
+                        InlineKeyboardButton::callback("🔤 No Symbols", "pass_no_symbols"),
+                        InlineKeyboardButton::callback("🚫 Ambiguous", "pass_no_ambiguous"),
+                    ],
+                    vec![
+                        InlineKeyboardButton::callback("🔐 Very Strong (32)", "pass_32"),
+                        InlineKeyboardButton::callback("📏 Custom Length", "pass_custom"),
+                    ],
+                ]);
+
+                bot.answer_callback_query(&q.id).await?;
+                bot.send_message(q.from.id, help_text)
+                    .reply_markup(keyboard)
+                    .await?;
+                return Ok(());
+            }
+            _ => return Ok(()),
+        };
+
+        // Create a fake message for password generation
+        let chat_id = q.from.id;
+        {
+            let mut rate_limiter = state.rate_limiter.lock().await;
+            if let Err(e) = rate_limiter.check_rate_limit(chat_id.0, state.config.rate_limit_per_minute) {
+                bot.answer_callback_query(&q.id)
+                    .text(e.to_string())
+                    .await?;
+                return Ok(());
+            }
+        }
+
+        // Parse and generate password
+        let mut password_config =
+            match parse_password_args(&message.replace("/pass", "").trim(), state.config.default_password_length)
+            {
+                Ok(config) => config,
+                Err(e) => {
+                    bot.answer_callback_query(&q.id)
+                        .text(format!("Error: {}", e))
+                        .await?;
+                    return Ok(());
+                }
+            };
+
+        // Validate length bounds
+        if password_config.length < state.config.min_password_length
+            || password_config.length > state.config.max_password_length
+        {
+            bot.answer_callback_query(&q.id)
+                .text("Invalid password length")
+                .await?;
+            return Ok(());
+        }
+
+        // Validate configuration
+        if let Err(e) = password_config.validate() {
+            bot.answer_callback_query(&q.id)
+                .text(e.to_string())
+                .await?;
+            return Ok(());
+        }
+
+        // Generate password
+        let mut rng = OsRng;
+        let password = match generate_password(&password_config, &mut rng) {
+            Ok(pwd) => pwd,
+            Err(e) => {
+                bot.answer_callback_query(&q.id)
+                    .text(format!("Failed to generate: {}", e))
+                    .await?;
+                return Ok(());
+            }
+        };
+
+        // Estimate strength
+        let strength = estimate_strength(&password_config);
+        let metadata = format_metadata(&password_config, strength);
+
+        let strength_emoji = match strength {
+            PasswordStrength::Strong => "💪",
+            PasswordStrength::Medium => "👍",
+            PasswordStrength::Weak => "⚠️",
+        };
+
+        let response = format!(
+            "🔐 Your Secure Password:\n\n`{}`\n\n{} {}\n\n⚠️ Security reminder: Copy this password immediately and store it securely. This message will remain in your chat history.",
+            password, strength_emoji, metadata
+        );
+
+        bot.answer_callback_query(&q.id).await?;
+        bot.send_message(q.from.id, response).await?;
+
+        info!(
+            "Generated password via button for user {}: {}",
+            q.from.id, metadata
+        );
+    }
+
     Ok(())
 }
 
